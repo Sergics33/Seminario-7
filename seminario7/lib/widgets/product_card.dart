@@ -1,7 +1,47 @@
 import 'package:flutter/material.dart';
+import '../models/product.dart';
+
+/// Widget seguro para mostrar imagen de red con gif de carga
+class SafeNetworkImage extends StatelessWidget {
+  final String? url;
+  final double? height;
+  final double? width;
+
+  const SafeNetworkImage({this.url, this.height, this.width, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    if (url == null || url!.isEmpty) {
+      return Image.asset(
+        'assets/no-image.png',
+        height: height,
+        width: width,
+        fit: BoxFit.cover,
+      );
+    }
+
+    return FadeInImage(
+      placeholder: const AssetImage('assets/jar-loading.gif'), // Gif de carga
+      image: NetworkImage(url!),
+      height: height,
+      width: width,
+      fit: BoxFit.cover,
+      imageErrorBuilder: (context, error, stackTrace) {
+        // Si la imagen falla
+        return Image.asset(
+          'assets/no-image.png',
+          height: height,
+          width: width,
+          fit: BoxFit.cover,
+        );
+      },
+    );
+  }
+}
 
 class ProductCard extends StatelessWidget {
-  const ProductCard({super.key});
+  final Product product;
+  const ProductCard({super.key, required this.product});
 
   @override
   Widget build(BuildContext context) {
@@ -14,63 +54,49 @@ class ProductCard extends StatelessWidget {
         decoration: _cardBorders(),
         child: Stack(
           alignment: Alignment.bottomLeft,
-          children: const [
-            _BackgroundImage(),
-            _ProductDetails(),
+          children: [
+            // Imagen del producto con gif de carga
+            SafeNetworkImage(
+              url: product.imageUrl,
+              height: 400,
+              width: double.infinity,
+            ),
+            // Detalles del producto
+            _ProductDetails(name: product.name, id: product.id),
+            // Precio
             Positioned(
               top: 0,
               right: 0,
-              child: _PriceTag(),
+              child: _PriceTag(price: product.price),
             ),
-            Positioned(
-              top: 0,
-              left: 0,
-              child: _NotAvailable(),
-            ),
+            // Si no está disponible
+            if (!product.available)
+              const Positioned(
+                top: 0,
+                left: 0,
+                child: _NotAvailable(),
+              ),
           ],
         ),
       ),
     );
   }
 
-  // BoxDecoration del contenedor principal
   static BoxDecoration _cardBorders() => BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(25),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            offset: Offset(0, 7),
-            blurRadius: 10,
-          ),
+          BoxShadow(color: Colors.black12, offset: Offset(0, 7), blurRadius: 10),
         ],
       );
 }
 
-// ---------------------- Widgets internos ----------------------
-
-class _BackgroundImage extends StatelessWidget {
-  const _BackgroundImage();
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(25),
-      child: Container(
-        width: double.infinity,
-        height: 400,
-        child: const FadeInImage(
-          placeholder: AssetImage('assets/jar-loading.gif'),
-          image: NetworkImage('https://via.placeholder.com/400x300/f6f6f6'),
-          fit: BoxFit.cover,
-        ),
-      ),
-    );
-  }
-}
+// -------------------- Widgets internos --------------------
 
 class _ProductDetails extends StatelessWidget {
-  const _ProductDetails();
+  final String name;
+  final String id;
+  const _ProductDetails({required this.name, required this.id});
 
   @override
   Widget build(BuildContext context) {
@@ -83,17 +109,17 @@ class _ProductDetails extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
+          children: [
             Text(
-              'Disco duro G',
-              style: TextStyle(
+              name,
+              style: const TextStyle(
                   fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
             ),
             Text(
-              'Id del disco duro',
-              style: TextStyle(fontSize: 15, color: Colors.white),
+              id,
+              style: const TextStyle(fontSize: 15, color: Colors.white),
             ),
           ],
         ),
@@ -111,7 +137,8 @@ class _ProductDetails extends StatelessWidget {
 }
 
 class _PriceTag extends StatelessWidget {
-  const _PriceTag();
+  final double price;
+  const _PriceTag({required this.price});
 
   @override
   Widget build(BuildContext context) {
@@ -126,13 +153,13 @@ class _PriceTag extends StatelessWidget {
           bottomLeft: Radius.circular(25),
         ),
       ),
-      child: const FittedBox(
+      child: FittedBox(
         fit: BoxFit.contain,
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Text(
-            '103,99€',
-            style: TextStyle(color: Colors.white, fontSize: 20),
+            '$price €',
+            style: const TextStyle(color: Colors.white, fontSize: 20),
           ),
         ),
       ),
