@@ -1,45 +1,36 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import '../models/product.dart';
 
 class ProductsService extends ChangeNotifier {
-  List<Product> products = [];
+  final String _baseUrl = 'https://flutter-varios-3a077-default-rtdb.firebaseio.com';
   bool isLoading = true;
+  List<Product> products = [];
 
   ProductsService() {
     loadProducts();
   }
 
-  Future<void> loadProducts() async {
-    await Future.delayed(const Duration(seconds: 2)); // simula carga
-    products = [
-      Product(
-        id: '1',
-        name: 'Disco duro G',
-        price: 103.99,
-        imageUrl: 'https://via.placeholder.com/400x300/f6f6f6',
-        available: true,
-      ),
-      Product(
-        id: '2',
-        name: 'Memoria RAM 16GB',
-        price: 75.50,
-        imageUrl: 'https://via.placeholder.com/400x300/00ff00',
-        available: false,
-      ),
-      Product(
-        id: '3',
-        name: 'Teclado mecánico',
-        price: 49.99,
-        imageUrl: 'https://via.placeholder.com/400x300/0000ff',
-        available: true,
-      ),
-    ];
+  Future<List<Product>> loadProducts() async {
+    isLoading = true;
+    notifyListeners();
+
+    final url = Uri.parse('$_baseUrl/products.json');
+    final resp = await http.get(url);
+
+    final Map<String, dynamic> productsMap = json.decode(resp.body);
+
+    products.clear(); // limpiar lista antes de agregar
+    productsMap.forEach((key, value) {
+      final tempProduct = Product.fromMap(value);
+      tempProduct.id = key; // la key de Firebase como id
+      products.add(tempProduct);
+    });
+
     isLoading = false;
     notifyListeners();
-  }
 
-  void addProduct(Product product) {
-    products.add(product);
-    notifyListeners();
+    return products;
   }
 }

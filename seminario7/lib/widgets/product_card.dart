@@ -7,11 +7,13 @@ class SafeNetworkImage extends StatelessWidget {
   final double? height;
   final double? width;
 
-  const SafeNetworkImage({this.url, this.height, this.width, super.key});
+  const SafeNetworkImage({super.key, this.url, this.height, this.width});
 
   @override
   Widget build(BuildContext context) {
-    if (url == null || url!.isEmpty) {
+    // Si la URL es null o vacía, mostramos placeholder
+    final imageUrl = url ?? '';
+    if (imageUrl.isEmpty) {
       return Image.asset(
         'assets/no-image.png',
         height: height,
@@ -21,13 +23,12 @@ class SafeNetworkImage extends StatelessWidget {
     }
 
     return FadeInImage(
-      placeholder: const AssetImage('assets/jar-loading.gif'), // Gif de carga
-      image: NetworkImage(url!),
+      placeholder: const AssetImage('assets/jar-loading.gif'),
+      image: NetworkImage(imageUrl),
       height: height,
       width: width,
       fit: BoxFit.cover,
       imageErrorBuilder: (context, error, stackTrace) {
-        // Si la imagen falla
         return Image.asset(
           'assets/no-image.png',
           height: height,
@@ -57,12 +58,15 @@ class ProductCard extends StatelessWidget {
           children: [
             // Imagen del producto con gif de carga
             SafeNetworkImage(
-              url: product.imageUrl,
+              url: product.picture ?? '', // Null-safe
               height: 400,
               width: double.infinity,
             ),
             // Detalles del producto
-            _ProductDetails(name: product.name, id: product.id),
+            _ProductDetails(
+              name: product.name,
+              id: product.id ?? 'No ID', // Null-safe
+            ),
             // Precio
             Positioned(
               top: 0,
@@ -96,7 +100,7 @@ class ProductCard extends StatelessWidget {
 class _ProductDetails extends StatelessWidget {
   final String name;
   final String id;
-  const _ProductDetails({required this.name, required this.id});
+  const _ProductDetails({super.key, required this.name, required this.id});
 
   @override
   Widget build(BuildContext context) {
@@ -138,7 +142,7 @@ class _ProductDetails extends StatelessWidget {
 
 class _PriceTag extends StatelessWidget {
   final double price;
-  const _PriceTag({required this.price});
+  const _PriceTag({super.key, required this.price});
 
   @override
   Widget build(BuildContext context) {
@@ -168,7 +172,7 @@ class _PriceTag extends StatelessWidget {
 }
 
 class _NotAvailable extends StatelessWidget {
-  const _NotAvailable();
+  const _NotAvailable({super.key});
 
   @override
   Widget build(BuildContext context) {

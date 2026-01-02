@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/products_service.dart';
 import '../widgets/product_card.dart';
+import 'loading_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -10,11 +11,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final productsService = Provider.of<ProductsService>(context);
 
-    if (productsService.isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
+    if (productsService.isLoading) return const LoadingScreen();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Productos')),
