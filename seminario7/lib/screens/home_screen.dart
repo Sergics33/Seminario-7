@@ -4,6 +4,7 @@ import '../services/products_service.dart';
 import '../widgets/product_card.dart';
 import 'loading_screen.dart';
 import 'product_screen.dart';
+import 'package:seminario7/models/product.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -33,8 +34,17 @@ class HomeScreen extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
         child: const Icon(Icons.add),
+        onPressed: () {
+          // Creamos un producto vacío
+          productsService.selectedProduct = Product(
+            available: false,
+            name: '',
+            price: 0,
+          );
+
+          Navigator.pushNamed(context, 'product');
+        },
       ),
     );
   }

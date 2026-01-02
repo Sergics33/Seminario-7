@@ -52,12 +52,19 @@ class ProductsService extends ChangeNotifier {
 
   Future<String> createProduct(Product product) async {
     final url = Uri.https(_baseUrl, 'products.json');
-    final resp = await http.post(url, body: product.toJson());
-    final decodedData = json.decode(resp.body);
-    print(decodedData);
+    final resp = await http.post(
+      url,
+      body: product.toJson(),
+    );
 
+    final decodedData = json.decode(resp.body);
+
+    // Firebase devuelve { "name": "ID_GENERADO" }
     product.id = decodedData['name'];
+
+    // Añadimos el producto a la lista local
     products.add(product);
+
     notifyListeners();
 
     return product.id!;
@@ -68,8 +75,10 @@ class ProductsService extends ChangeNotifier {
     notifyListeners();
 
     if (product.id == null) {
+      // CREAR
       await createProduct(product);
     } else {
+      // ACTUALIZAR
       await updateProduct(product);
     }
 

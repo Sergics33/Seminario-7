@@ -6,7 +6,6 @@ import '../widgets/product_card.dart';
 import '../widgets/product_image.dart';
 import 'package:flutter/services.dart';
 
-
 class ProductScreen extends StatelessWidget {
   const ProductScreen({super.key});
 
@@ -30,21 +29,18 @@ class _ProductScreenBody extends StatelessWidget {
     final productForm = Provider.of<ProductFormProvider>(context);
 
     return Scaffold(
-floatingActionButton: FloatingActionButton(
-  onPressed: () async {
-    final productForm = Provider.of<ProductFormProvider>(context, listen: false);
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          if (!productForm.isValidForm()) return;
 
-    if (!productForm.isValidForm()) return;
+          await productService.saveOrCreateProduct(
+            productForm.product,
+          );
 
-    final productsService = Provider.of<ProductsService>(context, listen: false);
-    await productsService.saveOrCreateProduct(productForm.product);
-
-    // Volver a la pantalla anterior
-    Navigator.of(context).pop();
-  },
-  child: const Icon(Icons.save_outlined),
-),
-
+          Navigator.pop(context);
+        },
+        child: const Icon(Icons.save_outlined),
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
       body: SingleChildScrollView(
         child: Column(
@@ -56,7 +52,8 @@ floatingActionButton: FloatingActionButton(
                   top: 60,
                   left: 20,
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back, size: 40, color: Colors.white),
+                    icon: const Icon(Icons.arrow_back,
+                        size: 40, color: Colors.white),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ),
@@ -64,7 +61,8 @@ floatingActionButton: FloatingActionButton(
                   top: 60,
                   right: 20,
                   child: IconButton(
-                    icon: const Icon(Icons.camera_alt_outlined, size: 40, color: Colors.white),
+                    icon: const Icon(Icons.camera_alt_outlined,
+                        size: 40, color: Colors.white),
                     onPressed: () {},
                   ),
                 ),
@@ -114,7 +112,8 @@ class _ProductForm extends StatelessWidget {
                 initialValue: product.name,
                 onChanged: (value) => product.name = value,
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'El nombre es obligatorio';
+                  if (value == null || value.isEmpty)
+                    return 'El nombre es obligatorio';
                   return null;
                 },
                 decoration: const InputDecoration(
@@ -135,7 +134,8 @@ class _ProductForm extends StatelessWidget {
                 },
                 inputFormatters: [
                   // Solo permite hasta 2 decimales
-                  FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,2}')),
+                  FilteringTextInputFormatter.allow(
+                      RegExp(r'^(\d+)?\.?\d{0,2}')),
                 ],
                 decoration: const InputDecoration(
                   hintText: '150€',
