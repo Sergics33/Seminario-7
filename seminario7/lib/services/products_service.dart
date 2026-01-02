@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../models/product.dart';
@@ -11,14 +10,42 @@ class ProductsService extends ChangeNotifier {
   late Product selectedProduct;
   bool isLoading = true;
   bool isSaving = false;
-
-  File? newPictureFile; // ← aquí almacenamos la foto nueva
+  File? newPictureFile; // Foto temporal
 
   ProductsService() {
     loadProducts();
   }
 
-  // ================== CARGAR PRODUCTOS ==================
+  /// Subir imagen a Cloudinary
+  Future<String?> uploadImage() async {
+    if (newPictureFile == null) return null;
+
+    final url = Uri.parse(
+        'https://api.cloudinary.com/v1_1/dygllwnoj/image/upload?upload_preset=flutter_products');
+
+    final imageUploadRequest = http.MultipartRequest('POST', url);
+    final file = await http.MultipartFile.fromPath('file', newPictureFile!.path);
+    imageUploadRequest.files.add(file);
+
+    final streamResponse = await imageUploadRequest.send();
+    final resp = await http.Response.fromStream(streamResponse);
+
+    if (resp.statusCode != 200 && resp.statusCode != 201) {
+      print('Error al subir imagen: ${resp.body}');
+      return null;
+    }
+
+    newPictureFile = null; // Limpiamos la foto temporal
+    final decodedData = json.decode(resp.body);
+    return decodedData['secure_url']; // Retornamos la URL de Cloudinary
+  }
+
+  void updateSelectedProductImage(String path) {
+    selectedProduct.picture = path;
+    newPictureFile = File(path);
+    notifyListeners();
+  }
+
   Future<List<Product>> loadProducts() async {
     isLoading = true;
     notifyListeners();
@@ -36,46 +63,15 @@ class ProductsService extends ChangeNotifier {
 
     isLoading = false;
     notifyListeners();
+
     return products;
   }
 
-  // ================== SUBIR IMAGEN A CLOUDINARY ==================
-  Future<String?> uploadImage() async {
-    if (newPictureFile == null) return null;
-
-    isSaving = true;
-    notifyListeners();
-
-    final url = Uri.parse(
-      'https://api.cloudinary.com/v1_1/dygllwnoj/image/upload?upload_preset=flutter_products',
-    );
-
-    final imageUploadRequest = http.MultipartRequest('POST', url);
-
-    final file = await http.MultipartFile.fromPath('file', newPictureFile!.path);
-    imageUploadRequest.files.add(file);
-
-    final streamResponse = await imageUploadRequest.send();
-    final resp = await http.Response.fromStream(streamResponse);
-
-    if (resp.statusCode != 200 && resp.statusCode != 201) {
-      print('Error subiendo imagen a Cloudinary');
-      print(resp.body);
-      return null;
-    }
-
-    newPictureFile = null; // reset
-    final decodedData = json.decode(resp.body);
-    return decodedData['secure_url'];
-  }
-
-  // ================== ACTUALIZAR PRODUCTO ==================
   Future<String> updateProduct(Product product) async {
     final url = Uri.https(_baseUrl, 'products/${product.id}.json');
     final resp = await http.put(url, body: product.toJson());
-    print(resp.body);
 
-    final index = products.indexWhere((p) => p.id == product.id);
+    final index = products.indexWhere((element) => element.id == product.id);
     if (index >= 0) {
       products[index] = product;
       notifyListeners();
@@ -84,31 +80,28 @@ class ProductsService extends ChangeNotifier {
     return product.id!;
   }
 
-  // ================== CREAR PRODUCTO ==================
   Future<String> createProduct(Product product) async {
     final url = Uri.https(_baseUrl, 'products.json');
     final resp = await http.post(url, body: product.toJson());
 
     final decodedData = json.decode(resp.body);
     product.id = decodedData['name'];
-
     products.add(product);
-    notifyListeners();
 
+    notifyListeners();
     return product.id!;
   }
 
-  // ================== GUARDAR O CREAR PRODUCTO ==================
+  /// Guardar o crear producto en Firebase
   Future saveOrCreateProduct(Product product) async {
     isSaving = true;
     notifyListeners();
 
-    // Si hay foto nueva, subirla antes de guardar
-    if (newPictureFile != null) {
+    // Subir imagen si es local
+    if (product.picture != null && product.picture!.startsWith('/')) {
+      final file = File(product.picture!);
       final imageUrl = await uploadImage();
-      if (imageUrl != null) {
-        product.picture = imageUrl;
-      }
+      if (imageUrl != null) product.picture = imageUrl;
     }
 
     if (product.id == null) {
@@ -118,13 +111,6 @@ class ProductsService extends ChangeNotifier {
     }
 
     isSaving = false;
-    notifyListeners();
-  }
-
-  // ================== ACTUALIZAR IMAGEN LOCAL ==================
-  void updateSelectedProductImage(String path) {
-    selectedProduct.picture = path;
-    newPictureFile = File(path);
     notifyListeners();
   }
 }

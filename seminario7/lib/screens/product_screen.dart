@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -55,10 +54,7 @@ class _ProductScreenBody extends StatelessWidget {
           children: [
             Stack(
               children: [
-                // Imagen del producto
                 ProductImage(url: productForm.product.picture),
-
-                // Botón volver
                 Positioned(
                   top: 60,
                   left: 20,
@@ -71,7 +67,6 @@ class _ProductScreenBody extends StatelessWidget {
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ),
-
                 // 📸 BOTÓN CÁMARA
                 Positioned(
                   top: 60,
@@ -98,7 +93,7 @@ class _ProductScreenBody extends StatelessWidget {
                             productService
                                 .updateSelectedProductImage(pickedFile.path);
 
-                            // Subimos la foto a Cloudinary
+                            // Subimos la foto a Cloudinary y actualizamos la UI
                             final String? imageUrl =
                                 await productService.uploadImage();
 
@@ -153,7 +148,6 @@ class _ProductForm extends StatelessWidget {
           child: Column(
             children: [
               const SizedBox(height: 10),
-
               // Nombre
               TextFormField(
                 initialValue: product.name,
@@ -172,9 +166,7 @@ class _ProductForm extends StatelessWidget {
                   ),
                 ),
               ),
-
               const SizedBox(height: 30),
-
               // Precio
               TextFormField(
                 initialValue: product.price.toString(),
@@ -196,9 +188,7 @@ class _ProductForm extends StatelessWidget {
                   ),
                 ),
               ),
-
               const SizedBox(height: 30),
-
               // Disponible
               SwitchListTile.adaptive(
                 value: product.available,
@@ -206,7 +196,6 @@ class _ProductForm extends StatelessWidget {
                 activeColor: Colors.indigo,
                 onChanged: productForm.updateAvailability,
               ),
-
               const SizedBox(height: 20),
             ],
           ),
