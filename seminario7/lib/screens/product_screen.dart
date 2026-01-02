@@ -30,13 +30,21 @@ class _ProductScreenBody extends StatelessWidget {
     final productForm = Provider.of<ProductFormProvider>(context);
 
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          if (!productForm.isValidForm()) return;
-          // Guardar cambios en Firebase aquí
-        },
-        child: const Icon(Icons.save_outlined),
-      ),
+floatingActionButton: FloatingActionButton(
+  onPressed: () async {
+    final productForm = Provider.of<ProductFormProvider>(context, listen: false);
+
+    if (!productForm.isValidForm()) return;
+
+    final productsService = Provider.of<ProductsService>(context, listen: false);
+    await productsService.saveOrCreateProduct(productForm.product);
+
+    // Volver a la pantalla anterior
+    Navigator.of(context).pop();
+  },
+  child: const Icon(Icons.save_outlined),
+),
+
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
       body: SingleChildScrollView(
         child: Column(

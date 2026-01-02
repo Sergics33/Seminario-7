@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+
 class Product {
   bool available;
   String name;
@@ -13,7 +16,6 @@ class Product {
     this.id,
   });
 
-  // Crear copia del producto para edición sin afectar la lista original
   Product copy() => Product(
         available: available,
         name: name,
@@ -22,14 +24,19 @@ class Product {
         id: id,
       );
 
-  // Método para crear desde Map (Firebase)
-  factory Product.fromMap(Map<String, dynamic> map) {
-    return Product(
-      available: map['available'] ?? true,
-      name: map['name'] ?? '',
-      picture: map['picture'],
-      price: (map['price'] ?? 0).toDouble(),
-      id: map['id'],
-    );
-  }
+  Map<String, dynamic> toMap() => {
+        'available': available,
+        'name': name,
+        'picture': picture,
+        'price': price,
+      };
+
+  String toJson() => json.encode(toMap());
+
+  factory Product.fromMap(Map<String, dynamic> map) => Product(
+        available: map['available'] ?? true,
+        name: map['name'] ?? '',
+        picture: map['picture'],
+        price: (map['price'] ?? 0).toDouble(),
+      );
 }
