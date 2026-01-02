@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -6,8 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../services/products_service.dart';
 import '../providers/product_form_provider.dart';
-
-// ------------------ PANTALLA PRODUCTO ------------------
+import '../widgets/product_image.dart';
 
 class ProductScreen extends StatelessWidget {
   const ProductScreen({super.key});
@@ -27,47 +27,27 @@ class _ProductScreenBody extends StatelessWidget {
   final ProductsService productService;
   const _ProductScreenBody({super.key, required this.productService});
 
-  // --------------------------------------------------------
-  // MÉTODO PRIVADO PARA TOMAR FOTO
-  Future<void> _processImage(ProductFormProvider productForm) async {
-    try {
-      final picker = ImagePicker();
-      final XFile? pickedFile = await picker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 80,
-      );
-
-      if (pickedFile == null) {
-        print('No se seleccionó ninguna imagen');
-        return;
-      }
-
-      print('Imagen tomada: ${pickedFile.path}');
-      productForm.product.picture = pickedFile.path;
-      productForm.notifyListeners();
-    } catch (e) {
-      print('Error al tomar la foto: $e');
-    }
-  }
-
-  // --------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     final productForm = Provider.of<ProductFormProvider>(context);
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          if (!productForm.isValidForm()) return;
+        onPressed: productService.isSaving
+            ? null
+            : () async {
+                if (!productForm.isValidForm()) return;
 
-          await productService.saveOrCreateProduct(
-            productForm.product,
-          );
+                await productService.saveOrCreateProduct(productForm.product);
 
-          if (!context.mounted) return;
-          Navigator.pop(context);
-        },
-        child: const Icon(Icons.save_outlined),
+                if (!context.mounted) return;
+                Navigator.pop(context);
+              },
+        child: productService.isSaving
+            ? const CircularProgressIndicator(
+                color: Colors.white,
+              )
+            : const Icon(Icons.save_outlined),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
       body: SingleChildScrollView(
@@ -92,7 +72,7 @@ class _ProductScreenBody extends StatelessWidget {
                   ),
                 ),
 
-                // Botón Cámara
+                // 📸 BOTÓN CÁMARA
                 Positioned(
                   top: 60,
                   right: 20,
@@ -102,9 +82,31 @@ class _ProductScreenBody extends StatelessWidget {
                       size: 40,
                       color: Colors.white,
                     ),
-                    onPressed: () async {
-                      await _processImage(productForm);
-                    },
+                    onPressed: productService.isSaving
+                        ? null
+                        : () async {
+                            final picker = ImagePicker();
+                            final XFile? pickedFile =
+                                await picker.pickImage(
+                              source: ImageSource.camera,
+                              imageQuality: 80,
+                            );
+
+                            if (pickedFile == null) return;
+
+                            // Guardamos la foto temporal
+                            productService
+                                .updateSelectedProductImage(pickedFile.path);
+
+                            // Subimos la foto a Cloudinary
+                            final String? imageUrl =
+                                await productService.uploadImage();
+
+                            if (imageUrl != null) {
+                              productForm.product.picture = imageUrl;
+                              productForm.notifyListeners();
+                            }
+                          },
                   ),
                 ),
               ],
@@ -207,69 +209,6 @@ class _ProductForm extends StatelessWidget {
 
               const SizedBox(height: 20),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// --------------------- WIDGET PRODUCT IMAGE ---------------------
-
-class ProductImage extends StatelessWidget {
-  final String? url;
-  const ProductImage({super.key, this.url});
-
-  Widget _getImage(String? picture) {
-    if (picture == null || picture.isEmpty) {
-      return const Image(
-        image: AssetImage('assets/no-image.png'),
-        fit: BoxFit.cover,
-      );
-    }
-
-    if (picture.startsWith('http')) {
-      return FadeInImage(
-        placeholder: const AssetImage('assets/jar-loading.gif'),
-        image: NetworkImage(picture),
-        fit: BoxFit.cover,
-      );
-    }
-
-    return Image.file(
-      File(picture),
-      fit: BoxFit.cover,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    const borderRadius = BorderRadius.only(
-      bottomLeft: Radius.circular(45),
-      bottomRight: Radius.circular(45),
-    );
-
-    return Padding(
-      padding: const EdgeInsets.all(10),
-      child: Container(
-        width: double.infinity,
-        height: 450,
-        decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: borderRadius,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Opacity(
-          opacity: 0.9,
-          child: ClipRRect(
-            borderRadius: borderRadius,
-            child: _getImage(url),
           ),
         ),
       ),
