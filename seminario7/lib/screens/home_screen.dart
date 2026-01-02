@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../services/products_service.dart';
 import '../widgets/product_card.dart';
 import 'loading_screen.dart';
+import 'product_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -19,7 +20,16 @@ class HomeScreen extends StatelessWidget {
         itemCount: productsService.products.length,
         itemBuilder: (context, index) {
           final product = productsService.products[index];
-          return ProductCard(product: product);
+          return GestureDetector(
+            onTap: () {
+              productsService.selectedProduct = product.copy(); // Creamos copia
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProductScreen()),
+              );
+            },
+            child: ProductCard(product: product),
+          );
         },
       ),
       floatingActionButton: FloatingActionButton(

@@ -8,6 +8,8 @@ class ProductsService extends ChangeNotifier {
   bool isLoading = true;
   List<Product> products = [];
 
+  late Product selectedProduct; // Producto seleccionado para detalle
+
   ProductsService() {
     loadProducts();
   }
@@ -18,13 +20,12 @@ class ProductsService extends ChangeNotifier {
 
     final url = Uri.parse('$_baseUrl/products.json');
     final resp = await http.get(url);
-
     final Map<String, dynamic> productsMap = json.decode(resp.body);
+    products.clear();
 
-    products.clear(); // limpiar lista antes de agregar
     productsMap.forEach((key, value) {
       final tempProduct = Product.fromMap(value);
-      tempProduct.id = key; // la key de Firebase como id
+      tempProduct.id = key;
       products.add(tempProduct);
     });
 

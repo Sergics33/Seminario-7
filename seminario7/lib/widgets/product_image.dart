@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'safe_network_image.dart';
 
 class ProductImage extends StatelessWidget {
-  const ProductImage({super.key});
+  final String? url;
+  const ProductImage({super.key, this.url});
 
   @override
   Widget build(BuildContext context) {
@@ -11,12 +13,12 @@ class ProductImage extends StatelessWidget {
     );
 
     return Padding(
-      padding: const EdgeInsets.only(top: 10, left: 10, right: 10),
+      padding: const EdgeInsets.all(10),
       child: Container(
         width: double.infinity,
         height: 450,
         decoration: BoxDecoration(
-          color: Colors.red, // temporal
+          color: Colors.black, // fondo negro para que el botón de cámara se vea
           borderRadius: borderRadius,
           boxShadow: [
             BoxShadow(
@@ -26,12 +28,15 @@ class ProductImage extends StatelessWidget {
             ),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: borderRadius,
-          child: const FadeInImage(
-            placeholder: AssetImage('assets/jar-loading.gif'),
-            image: NetworkImage('https://via.placeholder.com/400x300/green'),
-            fit: BoxFit.cover,
+        child: Opacity(
+          opacity: 0.9,
+          child: ClipRRect(
+            borderRadius: borderRadius,
+            child: SafeNetworkImage(
+              url: url,
+              height: 450,
+              width: double.infinity,
+            ),
           ),
         ),
       ),
