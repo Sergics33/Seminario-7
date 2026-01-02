@@ -1,10 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+
 import '../services/products_service.dart';
 import '../providers/product_form_provider.dart';
-import '../widgets/product_card.dart';
 import '../widgets/product_image.dart';
-import 'package:flutter/services.dart';
 
 class ProductScreen extends StatelessWidget {
   const ProductScreen({super.key});
@@ -37,6 +40,8 @@ class _ProductScreenBody extends StatelessWidget {
             productForm.product,
           );
 
+          // ✅ SOLUCIÓN AL ERROR
+          if (!context.mounted) return;
           Navigator.pop(context);
         },
         child: const Icon(Icons.save_outlined),
@@ -47,28 +52,51 @@ class _ProductScreenBody extends StatelessWidget {
           children: [
             Stack(
               children: [
+                // Imagen del producto
                 ProductImage(url: productForm.product.picture),
+
+                // Botón volver
                 Positioned(
                   top: 60,
                   left: 20,
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back,
-                        size: 40, color: Colors.white),
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      size: 40,
+                      color: Colors.white,
+                    ),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ),
+
+                // 📸 BOTÓN CÁMARA
                 Positioned(
                   top: 60,
                   right: 20,
                   child: IconButton(
-                    icon: const Icon(Icons.camera_alt_outlined,
-                        size: 40, color: Colors.white),
-                    onPressed: () {},
+                    icon: const Icon(
+                      Icons.camera_alt_outlined,
+                      size: 40,
+                      color: Colors.white,
+                    ),
+                    onPressed: () async {
+                      final picker = ImagePicker();
+                      final XFile? pickedFile = await picker.pickImage(
+                        source: ImageSource.camera,
+                        imageQuality: 80,
+                      );
+
+                      if (pickedFile == null) return;
+
+                      // Guardamos la imagen local temporal
+                      productForm.product.picture = pickedFile.path;
+                      productForm.notifyListeners();
+                    },
                   ),
                 ),
               ],
             ),
-            _ProductForm(),
+            const _ProductForm(),
           ],
         ),
       ),
@@ -76,7 +104,8 @@ class _ProductScreenBody extends StatelessWidget {
   }
 }
 
-// --------------------- Formulario ---------------------
+// --------------------- FORMULARIO ---------------------
+
 class _ProductForm extends StatelessWidget {
   const _ProductForm({super.key});
 
@@ -105,15 +134,19 @@ class _ProductForm extends StatelessWidget {
         ),
         child: Form(
           key: productForm.formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: Column(
             children: [
               const SizedBox(height: 10),
+
+              // Nombre
               TextFormField(
                 initialValue: product.name,
                 onChanged: (value) => product.name = value,
                 validator: (value) {
-                  if (value == null || value.isEmpty)
+                  if (value == null || value.isEmpty) {
                     return 'El nombre es obligatorio';
+                  }
                   return null;
                 },
                 decoration: const InputDecoration(
@@ -124,7 +157,10 @@ class _ProductForm extends StatelessWidget {
                   ),
                 ),
               ),
+
               const SizedBox(height: 30),
+
+              // Precio
               TextFormField(
                 initialValue: product.price.toString(),
                 keyboardType: TextInputType.number,
@@ -133,9 +169,9 @@ class _ProductForm extends StatelessWidget {
                   product.price = parsed ?? 0;
                 },
                 inputFormatters: [
-                  // Solo permite hasta 2 decimales
                   FilteringTextInputFormatter.allow(
-                      RegExp(r'^(\d+)?\.?\d{0,2}')),
+                    RegExp(r'^(\d+)?\.?\d{0,2}'),
+                  ),
                 ],
                 decoration: const InputDecoration(
                   hintText: '150€',
@@ -145,13 +181,17 @@ class _ProductForm extends StatelessWidget {
                   ),
                 ),
               ),
+
               const SizedBox(height: 30),
+
+              // Disponible
               SwitchListTile.adaptive(
                 value: product.available,
                 title: const Text('Disponible'),
                 activeColor: Colors.indigo,
                 onChanged: productForm.updateAvailability,
               ),
+
               const SizedBox(height: 20),
             ],
           ),

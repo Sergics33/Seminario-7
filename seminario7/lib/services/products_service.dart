@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../models/product.dart';
@@ -12,6 +13,34 @@ class ProductsService extends ChangeNotifier {
 
   ProductsService() {
     loadProducts();
+  }
+
+  Future<String?> uploadImage(File imageFile) async {
+    final url = Uri.parse(
+      'https://api.cloudinary.com/v1_1/dygllwnoj/image/upload',
+    );
+
+    final imageUploadRequest = http.MultipartRequest('POST', url);
+
+    imageUploadRequest.fields['upload_preset'] = 'flutter_products';
+    imageUploadRequest.files.add(
+      await http.MultipartFile.fromPath(
+        'file',
+        imageFile.path,
+      ),
+    );
+
+    final streamedResponse = await imageUploadRequest.send();
+    final resp = await http.Response.fromStream(streamedResponse);
+
+    if (resp.statusCode != 200 && resp.statusCode != 201) {
+      print('Algo salió mal');
+      print(resp.body);
+      return null;
+    }
+
+    final decodedData = json.decode(resp.body);
+    return decodedData['secure_url'];
   }
 
   Future<List<Product>> loadProducts() async {
@@ -74,11 +103,17 @@ class ProductsService extends ChangeNotifier {
     isSaving = true;
     notifyListeners();
 
+    if (product.picture != null && product.picture!.startsWith('/')) {
+      final file = File(product.picture!);
+      final imageUrl = await uploadImage(file);
+      if (imageUrl != null) {
+        product.picture = imageUrl;
+      }
+    }
+
     if (product.id == null) {
-      // CREAR
       await createProduct(product);
     } else {
-      // ACTUALIZAR
       await updateProduct(product);
     }
 
