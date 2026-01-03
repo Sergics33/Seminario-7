@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/product.dart';
 
-/// Widget seguro para mostrar imagen de red con gif de carga
 class SafeNetworkImage extends StatelessWidget {
   final String? url;
   final double? height;
@@ -11,7 +10,6 @@ class SafeNetworkImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Si la URL es null o vacía, mostramos placeholder
     final imageUrl = url ?? '';
     if (imageUrl.isEmpty) {
       return Image.asset(
@@ -56,24 +54,20 @@ class ProductCard extends StatelessWidget {
         child: Stack(
           alignment: Alignment.bottomLeft,
           children: [
-            // Imagen del producto con gif de carga
             SafeNetworkImage(
-              url: product.picture ?? '', // Null-safe
+              url: product.picture ?? '',
               height: 400,
               width: double.infinity,
             ),
-            // Detalles del producto
             _ProductDetails(
               name: product.name,
-              id: product.id ?? 'No ID', // Null-safe
+              id: product.id ?? 'No ID',
             ),
-            // Precio
             Positioned(
               top: 0,
               right: 0,
               child: _PriceTag(price: product.price),
             ),
-            // Si no está disponible
             if (!product.available)
               const Positioned(
                 top: 0,
@@ -95,7 +89,6 @@ class ProductCard extends StatelessWidget {
       );
 }
 
-// -------------------- Widgets internos --------------------
 
 class _ProductDetails extends StatelessWidget {
   final String name;

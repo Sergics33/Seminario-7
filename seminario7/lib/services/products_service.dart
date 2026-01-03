@@ -10,13 +10,12 @@ class ProductsService extends ChangeNotifier {
   late Product selectedProduct;
   bool isLoading = true;
   bool isSaving = false;
-  File? newPictureFile; // Foto temporal
+  File? newPictureFile; 
 
   ProductsService() {
     loadProducts();
   }
 
-  // ==================== SUBIR IMAGEN A CLOUDINARY ====================
   Future<String?> uploadImage() async {
     if (newPictureFile == null) return null;
 
@@ -35,9 +34,9 @@ class ProductsService extends ChangeNotifier {
       return null;
     }
 
-    newPictureFile = null; // Limpiamos la foto temporal
+    newPictureFile = null; 
     final decodedData = json.decode(resp.body);
-    return decodedData['secure_url']; // Retornamos la URL de Cloudinary
+    return decodedData['secure_url'];
   }
 
   void updateSelectedProductImage(String path) {
@@ -46,7 +45,6 @@ class ProductsService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ==================== CARGAR PRODUCTOS ====================
   Future<List<Product>> loadProducts() async {
     isLoading = true;
     notifyListeners();
@@ -67,7 +65,6 @@ class ProductsService extends ChangeNotifier {
     return products;
   }
 
-  // ==================== CREAR / ACTUALIZAR PRODUCTO ====================
   Future<String> updateProduct(Product product) async {
     final url = Uri.https(_baseUrl, 'products/${product.id}.json');
     await http.put(url, body: product.toJson());
@@ -96,13 +93,11 @@ class ProductsService extends ChangeNotifier {
     isSaving = true;
     notifyListeners();
 
-    // Subir imagen si es local
     if (product.picture != null && product.picture!.startsWith('/')) {
       final imageUrl = await uploadImage();
       if (imageUrl != null) product.picture = imageUrl;
     }
 
-    // Asignar fecha de registro si no tiene
     product.registrationDate ??= DateTime.now().toIso8601String();
 
     if (product.id == null) {
@@ -115,7 +110,6 @@ class ProductsService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ==================== BORRAR PRODUCTO ====================
   Future<void> deleteProduct(String id) async {
     final url = Uri.https(_baseUrl, 'products/$id.json');
     await http.delete(url);

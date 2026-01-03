@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 import '../services/products_service.dart';
 import '../providers/product_form_provider.dart';
 
-// ---------------------- WIDGET DE IMAGEN ----------------------
 class ProductImage extends StatelessWidget {
   final String? url;
   const ProductImage({super.key, this.url});
@@ -24,7 +23,7 @@ class ProductImage extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              Container(color: Colors.grey[300]), // fondo gris
+              Container(color: Colors.grey[300]),
               if (url != null && url!.isNotEmpty)
                 Image.network(
                   url!,
@@ -49,7 +48,6 @@ class ProductImage extends StatelessWidget {
   }
 }
 
-// ---------------------- PANTALLA PRODUCTO ----------------------
 class ProductScreen extends StatelessWidget {
   const ProductScreen({super.key});
 
@@ -68,7 +66,6 @@ class _ProductScreenBody extends StatelessWidget {
   final ProductsService productService;
   const _ProductScreenBody({super.key, required this.productService});
 
-  // ================== SELECCIÓN DE IMAGEN ==================
   Future<void> _pickImage(ImageSource source, ProductFormProvider form) async {
     final picker = ImagePicker();
     final XFile? pickedFile = await picker.pickImage(
@@ -78,10 +75,8 @@ class _ProductScreenBody extends StatelessWidget {
 
     if (pickedFile == null) return;
 
-    // Guardamos la imagen temporal en el service
     productService.updateSelectedProductImage(pickedFile.path);
 
-    // Subimos la imagen a Cloudinary
     final String? imageUrl = await productService.uploadImage();
     if (imageUrl != null) {
       form.product.picture = imageUrl;
@@ -89,7 +84,6 @@ class _ProductScreenBody extends StatelessWidget {
     }
   }
 
-  // ================== CONFIRMAR BORRADO ==================
   void _confirmDelete(BuildContext context, String id) {
     showDialog(
       context: context,
@@ -104,8 +98,8 @@ class _ProductScreenBody extends StatelessWidget {
           TextButton(
             onPressed: () {
               productService.deleteProduct(id);
-              Navigator.pop(context); // cerrar dialog
-              Navigator.pop(context); // volver a lista
+              Navigator.pop(context); 
+              Navigator.pop(context); 
             },
             child: const Text('Borrar', style: TextStyle(color: Colors.red)),
           ),
@@ -158,7 +152,6 @@ class _ProductScreenBody extends StatelessWidget {
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ),
-                // Botón cámara
                 Positioned(
                   top: 60,
                   right: 60,
@@ -170,7 +163,6 @@ class _ProductScreenBody extends StatelessWidget {
                         : () => _pickImage(ImageSource.camera, productForm),
                   ),
                 ),
-                // Botón galería
                 Positioned(
                   top: 60,
                   right: 10,
@@ -192,7 +184,6 @@ class _ProductScreenBody extends StatelessWidget {
   }
 }
 
-// --------------------- FORMULARIO CON FECHA CORREGIDO ---------------------
 class _ProductFormWithDate extends StatefulWidget {
   const _ProductFormWithDate({super.key});
 
@@ -251,7 +242,6 @@ class _ProductFormWithDateState extends State<_ProductFormWithDate> {
         child: Column(
           children: [
             const SizedBox(height: 10),
-            // Nombre
             TextFormField(
               initialValue: product.name,
               onChanged: (value) => product.name = value,
@@ -266,7 +256,6 @@ class _ProductFormWithDateState extends State<_ProductFormWithDate> {
               ),
             ),
             const SizedBox(height: 30),
-            // Precio
             TextFormField(
               initialValue: product.price.toString(),
               keyboardType: TextInputType.number,
@@ -283,7 +272,6 @@ class _ProductFormWithDateState extends State<_ProductFormWithDate> {
               ),
             ),
             const SizedBox(height: 30),
-            // Fecha de registro con DatePicker
             TextFormField(
               readOnly: true,
               controller: _dateController,
@@ -315,7 +303,6 @@ class _ProductFormWithDateState extends State<_ProductFormWithDate> {
               },
             ),
             const SizedBox(height: 20),
-            // Disponible (ahora al final)
             SwitchListTile.adaptive(
               value: product.available,
               title: const Text('Disponible'),

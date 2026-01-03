@@ -58,8 +58,8 @@ class _ProductScreenBody extends StatelessWidget {
           TextButton(
             onPressed: () {
               productService.deleteProduct(id);
-              Navigator.pop(context); // cerrar dialog
-              Navigator.pop(context); // volver a lista
+              Navigator.pop(context);
+              Navigator.pop(context);
             },
             child: const Text('Borrar', style: TextStyle(color: Colors.red)),
           ),
@@ -111,7 +111,6 @@ class _ProductScreenBody extends StatelessWidget {
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ),
-                // Botón cámara
                 Positioned(
                   top: 60,
                   right: 60,
@@ -122,7 +121,6 @@ class _ProductScreenBody extends StatelessWidget {
                         : () => _pickImage(ImageSource.camera, productForm),
                   ),
                 ),
-                // Botón galería
                 Positioned(
                   top: 60,
                   right: 10,
@@ -143,7 +141,6 @@ class _ProductScreenBody extends StatelessWidget {
   }
 }
 
-// --------------------- FORMULARIO CON FECHA ---------------------
 
 class _ProductFormWithDate extends StatelessWidget {
   const _ProductFormWithDate({super.key});
@@ -214,7 +211,6 @@ class _ProductFormWithDate extends StatelessWidget {
                 onChanged: productForm.updateAvailability,
               ),
               const SizedBox(height: 20),
-              // ---------------- FECHA ----------------
               TextFormField(
                 initialValue: product.registrationDate != null
                     ? product.registrationDate!.split('T')[0]

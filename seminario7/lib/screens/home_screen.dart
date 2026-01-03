@@ -23,7 +23,7 @@ class HomeScreen extends StatelessWidget {
           final product = productsService.products[index];
           return GestureDetector(
             onTap: () {
-              productsService.selectedProduct = product.copy(); // Creamos copia
+              productsService.selectedProduct = product.copy();
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const ProductScreen()),
@@ -36,7 +36,6 @@ class HomeScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: () {
-          // Creamos un producto vacío
           productsService.selectedProduct = Product(
             available: false,
             name: '',
