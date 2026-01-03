@@ -17,36 +17,37 @@ class ProductImage extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(10),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(25), // Bordes redondeados
-        child: Container(
+        borderRadius: BorderRadius.circular(25),
+        child: SizedBox(
           width: double.infinity,
           height: 250,
-          color: Colors.grey[300],
-          child: url == null || url!.isEmpty
-              ? const Icon(Icons.image, size: 100, color: Colors.white70)
-              : Image.network(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Container(color: Colors.grey[300]), // fondo gris
+              if (url != null && url!.isNotEmpty)
+                Image.network(
                   url!,
                   fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: double.infinity,
                   loadingBuilder: (context, child, progress) {
                     if (progress == null) return child;
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
+                    return const Center(child: CircularProgressIndicator());
                   },
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Center(
-                      child: Icon(Icons.broken_image, size: 100, color: Colors.white70),
-                    );
-                  },
+                  errorBuilder: (context, error, stackTrace) => const Center(
+                    child: Icon(Icons.broken_image, size: 100, color: Colors.white70),
+                  ),
+                )
+              else
+                const Center(
+                  child: Icon(Icons.image, size: 100, color: Colors.white70),
                 ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
-
 
 // ---------------------- PANTALLA PRODUCTO ----------------------
 class ProductScreen extends StatelessWidget {
@@ -191,13 +192,42 @@ class _ProductScreenBody extends StatelessWidget {
   }
 }
 
-// --------------------- FORMULARIO CON FECHA ---------------------
-class _ProductFormWithDate extends StatelessWidget {
+// --------------------- FORMULARIO CON FECHA CORREGIDO ---------------------
+class _ProductFormWithDate extends StatefulWidget {
   const _ProductFormWithDate({super.key});
 
   @override
+  State<_ProductFormWithDate> createState() => _ProductFormWithDateState();
+}
+
+class _ProductFormWithDateState extends State<_ProductFormWithDate> {
+  late TextEditingController _dateController;
+  bool _initialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      final productForm =
+          Provider.of<ProductFormProvider>(context, listen: false);
+      _dateController = TextEditingController(
+        text: productForm.product.registrationDate != null
+            ? productForm.product.registrationDate!.split('T')[0]
+            : '',
+      );
+      _initialized = true;
+    }
+  }
+
+  @override
+  void dispose() {
+    _dateController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final productForm = Provider.of<ProductFormProvider>(context);
+    final productForm = Provider.of<ProductFormProvider>(context, listen: false);
     final product = productForm.product;
 
     return Padding(
@@ -218,69 +248,82 @@ class _ProductFormWithDate extends StatelessWidget {
             ),
           ],
         ),
-        child: Form(
-          key: productForm.formKey,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
-          child: Column(
-            children: [
-              const SizedBox(height: 10),
-              // Nombre
-              TextFormField(
-                initialValue: product.name,
-                onChanged: (value) => product.name = value,
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'El nombre es obligatorio' : null,
-                decoration: const InputDecoration(
-                  hintText: 'Nombre del producto',
-                  labelText: 'Nombre:',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
-                  ),
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
+            // Nombre
+            TextFormField(
+              initialValue: product.name,
+              onChanged: (value) => product.name = value,
+              validator: (value) =>
+                  value == null || value.isEmpty ? 'El nombre es obligatorio' : null,
+              decoration: const InputDecoration(
+                hintText: 'Nombre del producto',
+                labelText: 'Nombre:',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(10)),
                 ),
               ),
-              const SizedBox(height: 30),
-              // Precio
-              TextFormField(
-                initialValue: product.price.toString(),
-                keyboardType: TextInputType.number,
-                onChanged: (value) => product.price = double.tryParse(value) ?? 0,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,2}')),
-                ],
-                decoration: const InputDecoration(
-                  hintText: '150€',
-                  labelText: 'Precio:',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
-                  ),
+            ),
+            const SizedBox(height: 30),
+            // Precio
+            TextFormField(
+              initialValue: product.price.toString(),
+              keyboardType: TextInputType.number,
+              onChanged: (value) => product.price = double.tryParse(value) ?? 0,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,2}')),
+              ],
+              decoration: const InputDecoration(
+                hintText: '150€',
+                labelText: 'Precio:',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(10)),
                 ),
               ),
-              const SizedBox(height: 30),
-              // Disponible
-              SwitchListTile.adaptive(
-                value: product.available,
-                title: const Text('Disponible'),
-                activeColor: Colors.indigo,
-                onChanged: productForm.updateAvailability,
-              ),
-              const SizedBox(height: 20),
-              // Fecha de registro
-              TextFormField(
-                initialValue: product.registrationDate != null
-                    ? product.registrationDate!.split('T')[0]
-                    : '',
-                readOnly: true,
-                decoration: const InputDecoration(
-                  hintText: 'Fecha de registro',
-                  labelText: 'Fecha de registro:',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
-                  ),
+            ),
+            const SizedBox(height: 30),
+            // Fecha de registro con DatePicker
+            TextFormField(
+              readOnly: true,
+              controller: _dateController,
+              decoration: const InputDecoration(
+                hintText: 'Fecha de registro',
+                labelText: 'Fecha de registro:',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(10)),
                 ),
               ),
-              const SizedBox(height: 20),
-            ],
-          ),
+              onTap: () async {
+                DateTime initialDate = product.registrationDate != null
+                    ? DateTime.parse(product.registrationDate!)
+                    : DateTime.now();
+
+                DateTime? pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: initialDate,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2100),
+                );
+
+                if (pickedDate != null) {
+                  product.registrationDate = pickedDate.toIso8601String();
+                  _dateController.text =
+                      pickedDate.toLocal().toString().split(' ')[0];
+                  productForm.notifyListeners();
+                }
+              },
+            ),
+            const SizedBox(height: 20),
+            // Disponible (ahora al final)
+            SwitchListTile.adaptive(
+              value: product.available,
+              title: const Text('Disponible'),
+              activeColor: Colors.indigo,
+              onChanged: productForm.updateAvailability,
+            ),
+            const SizedBox(height: 20),
+          ],
         ),
       ),
     );
