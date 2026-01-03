@@ -16,7 +16,7 @@ class ProductsService extends ChangeNotifier {
     loadProducts();
   }
 
-  /// Subir imagen a Cloudinary
+  // ==================== SUBIR IMAGEN A CLOUDINARY ====================
   Future<String?> uploadImage() async {
     if (newPictureFile == null) return null;
 
@@ -46,6 +46,7 @@ class ProductsService extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ==================== CARGAR PRODUCTOS ====================
   Future<List<Product>> loadProducts() async {
     isLoading = true;
     notifyListeners();
@@ -63,13 +64,13 @@ class ProductsService extends ChangeNotifier {
 
     isLoading = false;
     notifyListeners();
-
     return products;
   }
 
+  // ==================== CREAR / ACTUALIZAR PRODUCTO ====================
   Future<String> updateProduct(Product product) async {
     final url = Uri.https(_baseUrl, 'products/${product.id}.json');
-    final resp = await http.put(url, body: product.toJson());
+    await http.put(url, body: product.toJson());
 
     final index = products.indexWhere((element) => element.id == product.id);
     if (index >= 0) {
@@ -83,26 +84,26 @@ class ProductsService extends ChangeNotifier {
   Future<String> createProduct(Product product) async {
     final url = Uri.https(_baseUrl, 'products.json');
     final resp = await http.post(url, body: product.toJson());
-
     final decodedData = json.decode(resp.body);
     product.id = decodedData['name'];
-    products.add(product);
 
+    products.add(product);
     notifyListeners();
     return product.id!;
   }
 
-  /// Guardar o crear producto en Firebase
   Future saveOrCreateProduct(Product product) async {
     isSaving = true;
     notifyListeners();
 
     // Subir imagen si es local
     if (product.picture != null && product.picture!.startsWith('/')) {
-      final file = File(product.picture!);
       final imageUrl = await uploadImage();
       if (imageUrl != null) product.picture = imageUrl;
     }
+
+    // Asignar fecha de registro si no tiene
+    product.registrationDate ??= DateTime.now().toIso8601String();
 
     if (product.id == null) {
       await createProduct(product);
@@ -111,6 +112,15 @@ class ProductsService extends ChangeNotifier {
     }
 
     isSaving = false;
+    notifyListeners();
+  }
+
+  // ==================== BORRAR PRODUCTO ====================
+  Future<void> deleteProduct(String id) async {
+    final url = Uri.https(_baseUrl, 'products/$id.json');
+    await http.delete(url);
+
+    products.removeWhere((product) => product.id == id);
     notifyListeners();
   }
 }

@@ -1,42 +1,59 @@
 import 'dart:convert';
 
-
 class Product {
-  bool available;
-  String name;
-  String? picture;
-  double price;
   String? id;
+  String name;
+  double price;
+  bool available;
+  String? picture;
+  String? registrationDate;
 
   Product({
-    required this.available,
-    required this.name,
-    this.picture,
-    required this.price,
     this.id,
+    this.name = '',
+    this.price = 0,
+    this.available = true,
+    this.picture,
+    this.registrationDate,
   });
 
-  Product copy() => Product(
-        available: available,
-        name: name,
-        picture: picture,
-        price: price,
-        id: id,
-      );
+  // ================== CONVERTIR A MAP ==================
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'price': price,
+      'available': available,
+      'picture': picture,
+      'registrationDate': registrationDate,
+    };
+  }
 
-  Map<String, dynamic> toMap() => {
-        'available': available,
-        'name': name,
-        'picture': picture,
-        'price': price,
-      };
+  // ================== CREAR DESDE MAP ==================
+  factory Product.fromMap(Map<String, dynamic> map) {
+    return Product(
+      name: map['name'] ?? '',
+      price: map['price']?.toDouble() ?? 0,
+      available: map['available'] ?? true,
+      picture: map['picture'],
+      registrationDate: map['registrationDate'],
+    );
+  }
 
+  // ================== CONVERTIR A JSON ==================
   String toJson() => json.encode(toMap());
 
-  factory Product.fromMap(Map<String, dynamic> map) => Product(
-        available: map['available'] ?? true,
-        name: map['name'] ?? '',
-        picture: map['picture'],
-        price: (map['price'] ?? 0).toDouble(),
-      );
+  // ================== CREAR DESDE JSON ==================
+  factory Product.fromJson(String source) => Product.fromMap(json.decode(source));
+
+  // ================== MÉTODO COPY ==================
+  Product copy() {
+    return Product(
+      id: id,
+      name: name,
+      price: price,
+      available: available,
+      picture: picture,
+      registrationDate: registrationDate,
+    );
+  }
 }
