@@ -22,6 +22,7 @@ dependencies:
 
   # Para trabajar con imágenes y cámara
   image_picker: ^1.1.0
+  flutter_secure_storage: ^10.0.0
 
 dev_dependencies:
   flutter_test:

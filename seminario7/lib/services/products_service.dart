@@ -2,15 +2,18 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/product.dart';
 
 class ProductsService extends ChangeNotifier {
   final String _baseUrl = 'flutter-varios-3a077-default-rtdb.firebaseio.com';
-  List<Product> products = [];
+  final List<Product> products = [];
   late Product selectedProduct;
   bool isLoading = true;
   bool isSaving = false;
-  File? newPictureFile; 
+  File? newPictureFile;
+
+  final storage = const FlutterSecureStorage();
 
   ProductsService() {
     loadProducts();
@@ -34,7 +37,7 @@ class ProductsService extends ChangeNotifier {
       return null;
     }
 
-    newPictureFile = null; 
+    newPictureFile = null;
     final decodedData = json.decode(resp.body);
     return decodedData['secure_url'];
   }
@@ -49,16 +52,22 @@ class ProductsService extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
 
-    final url = Uri.https(_baseUrl, 'products.json');
+    final url = Uri.https(_baseUrl, 'products.json', {
+      'auth': await storage.read(key: 'token') ?? ''
+    });
+
     final resp = await http.get(url);
-    final Map<String, dynamic> productsMap = json.decode(resp.body);
+    final Map<String, dynamic>? productsMap = json.decode(resp.body);
 
     products.clear();
-    productsMap.forEach((key, value) {
-      final tempProduct = Product.fromMap(value);
-      tempProduct.id = key;
-      products.add(tempProduct);
-    });
+
+    if (productsMap != null) {
+      productsMap.forEach((key, value) {
+        final tempProduct = Product.fromMap(value);
+        tempProduct.id = key;
+        products.add(tempProduct);
+      });
+    }
 
     isLoading = false;
     notifyListeners();
@@ -66,7 +75,10 @@ class ProductsService extends ChangeNotifier {
   }
 
   Future<String> updateProduct(Product product) async {
-    final url = Uri.https(_baseUrl, 'products/${product.id}.json');
+    final url = Uri.https(_baseUrl, 'products/${product.id}.json', {
+      'auth': await storage.read(key: 'token') ?? ''
+    });
+
     await http.put(url, body: product.toJson());
 
     final index = products.indexWhere((element) => element.id == product.id);
@@ -79,7 +91,10 @@ class ProductsService extends ChangeNotifier {
   }
 
   Future<String> createProduct(Product product) async {
-    final url = Uri.https(_baseUrl, 'products.json');
+    final url = Uri.https(_baseUrl, 'products.json', {
+      'auth': await storage.read(key: 'token') ?? ''
+    });
+
     final resp = await http.post(url, body: product.toJson());
     final decodedData = json.decode(resp.body);
     product.id = decodedData['name'];
@@ -111,7 +126,10 @@ class ProductsService extends ChangeNotifier {
   }
 
   Future<void> deleteProduct(String id) async {
-    final url = Uri.https(_baseUrl, 'products/$id.json');
+    final url = Uri.https(_baseUrl, 'products/$id.json', {
+      'auth': await storage.read(key: 'token') ?? ''
+    });
+
     await http.delete(url);
 
     products.removeWhere((product) => product.id == id);
